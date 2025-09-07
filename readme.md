@@ -52,15 +52,15 @@ fun Camera2Preview(
     val lifecycleOwner = LocalLifecycleOwner.current
     val coroutineScope = rememberCoroutineScope()
 
-    // Usamos remember con key para recrear el cameraBuilder cuando cambia la cámara
+    // Use remember to create the Camera2Builder instance
     val cameraBuilder = remember(cameraId) {
         Camera2Builder(context, cameraId, previewSize)
     }
 
-    // Variable para gestionar el estado de la TextureView
+    // Var to hold the TextureView reference
     val textureViewState = remember { mutableStateOf<TextureView?>(null) }
 
-    // Efecto para manejar el ciclo de vida
+    // Effect to manage the lifecycle
     DisposableEffect(key1 = lifecycleOwner, key2 = cameraId) {
         val lifecycleObserver = LifecycleEventObserver { _, event ->
             when (event) {
@@ -100,14 +100,14 @@ fun Camera2Preview(
                     }
 
                     override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {
-                        // Reconfigurar cuando cambia el tamaño
+                        // Restart the preview if the size changes
                         if (cameraBuilder.isCameraActive()) {
                             cameraBuilder.restartPreview()
                         }
                     }
 
                     override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
-                        cameraBuilder.release()
+                        cameraBuilder.release() // Release the camera resources
                         return true
                     }
 
@@ -116,7 +116,7 @@ fun Camera2Preview(
             }
         },
         update = { textureView ->
-            // Limpiar la TextureView cuando cambia la cámara
+            // Clear the TextureView when the camera changes
             textureView.surfaceTexture?.let {
                 it.release()
             }
