@@ -128,3 +128,15 @@ fun Camera2Preview(
 > None you can use the `setOnFrameListener` method to receive the nv21 byte array frames and the image size.
 
 Check the example in the `./project-dir/app` folder for more details.
+
+
+## Get the available cameras
+
+You can use `DeviceHelper.getAvailableCameras(context: Context): List<CameraInfo>` to get the available cameras on the device.
+
+```kotlinkotlin
+val cameras = DeviceHelper.getAvailableCameras(context)
+cameras.forEach { cameraInfo ->
+    Log.d("CameraInfo", "Camera ID: ${cameraInfo.cameraId}, Lens Facing: ${cameraInfo.lensFacing}")
+}
+```
