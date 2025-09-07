@@ -134,7 +134,7 @@ Check the example in the `./project-dir/app` folder for more details.
 
 You can use `DeviceHelper.getAvailableCameras(context: Context): List<CameraInfo>` to get the available cameras on the device.
 
-```kotlinkotlin
+```kotlin
 val cameras = DeviceHelper.getAvailableCameras(context)
 cameras.forEach { cameraInfo ->
     Log.d("CameraInfo", "Camera ID: ${cameraInfo.cameraId}, Lens Facing: ${cameraInfo.lensFacing}")
