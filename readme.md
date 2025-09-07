@@ -2,6 +2,7 @@
 
 Step 1. Add the JitPack repository to your `./project-dir/build.gradle` file
 
+**gradle groovy DSL**
 ```grovy
 dependencyResolutionManagement {
 	repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
@@ -13,6 +14,7 @@ dependencyResolutionManagement {
 ```
 
 
+**gradle kotlin DSL**
 ```grovy Kotlin
 dependencyResolutionManagement {
 	repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
@@ -124,3 +126,5 @@ fun Camera2Preview(
 ```
 
 > None you can use the `setOnFrameListener` method to receive the nv21 byte array frames and the image size.
+
+Check the example in the `./project-dir/app` folder for more details.
