@@ -43,7 +43,7 @@ class Camera2Builder(
     @RequiresApi(Build.VERSION_CODES.P)
     fun setTextureView(textureView: TextureView?) {
         this.textureView = textureView
-        if (isRunning.get() && textureView != null && textureView.surfaceTexture != null) {
+        if (isRunning.get()) {
             restartPreview()
         }
     }
