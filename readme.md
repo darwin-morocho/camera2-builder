@@ -2,26 +2,38 @@
 
 Step 1. Add the JitPack repository to your `./project-dir/build.gradle` file
 
-**gradle groovy DSL**
+**Native apps - gradle groovy DSL**
 ```grovy
 dependencyResolutionManagement {
 	repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
 	repositories {
 		mavenCentral()
-		maven { url 'https://jitpack.io' }
+		maven { url 'https://jitpack.io' } // <-- ADD THIS
 	}
 }
 ```
 
 
-**gradle kotlin DSL**
+**Native apps - gradle kotlin DSL**
 ```grovy Kotlin
 dependencyResolutionManagement {
 	repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
 	repositories {
 			mavenCentral()
-			maven { url = uri("https://jitpack.io") }
+			maven { url = uri("https://jitpack.io") } // <-- ADD THIS
 	}
+}
+```
+
+**Flutter**
+In your `./project-dir/android/build.gradle` file
+```grovy Kotlin
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url = uri("https://jitpack.io") } // <-- ADD THIS
+    }
 }
 ```
 
