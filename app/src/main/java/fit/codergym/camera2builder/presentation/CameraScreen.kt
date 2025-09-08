@@ -1,5 +1,6 @@
 package fit.codergym.camera2builder.presentation
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,7 +43,7 @@ fun CameraScreen() {
         Size(1280, 720)
     }
 
-    // Key para forzar la recreación del CameraPreview cuando cambia la cámara
+    // Key to force recomposition of CameraPreview when camera changes
     val cameraPreviewKey = remember(selectedCameraId.value) { selectedCameraId.value }
 
     Box(
@@ -86,7 +87,7 @@ fun CameraScreen() {
                 }
             }
 
-            // Usamos key para forzar la recreación cuando cambia la cámara
+            // Use keys to recreate CameraPreview when camera changes
             key(cameraPreviewKey) {
                 Camera2Preview(
                     modifier = Modifier
@@ -95,7 +96,7 @@ fun CameraScreen() {
                     cameraId = selectedCameraId.value,
                     previewSize = previewSize,
                     onFrame = { byteArray, size ->
-                        // Procesar frame aquí
+                        Log.i("👀 CameraScreen", "Received frame of size: ${byteArray.size} bytes, resolution: ${size.width}x${size.height}")
                     }
                 )
             }

@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
@@ -17,10 +16,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import fit.codergym.camera2builder.Camera2Builder
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-
 @Composable
 fun Camera2Preview(
     modifier: Modifier = Modifier,
@@ -30,17 +25,13 @@ fun Camera2Preview(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val coroutineScope = rememberCoroutineScope()
 
-    // Usamos remember con key para recrear el cameraBuilder cuando cambia la cámara
     val cameraBuilder = remember(cameraId) {
         Camera2Builder(context, cameraId, previewSize)
     }
 
-    // Variable para gestionar el estado de la TextureView
     val textureViewState = remember { mutableStateOf<TextureView?>(null) }
 
-    // Efecto para manejar el ciclo de vida
     DisposableEffect(key1 = lifecycleOwner, key2 = cameraId) {
         val lifecycleObserver = LifecycleEventObserver { _, event ->
             when (event) {
@@ -96,10 +87,7 @@ fun Camera2Preview(
             }
         },
         update = { textureView ->
-            // Limpiar la TextureView cuando cambia la cámara
-            textureView.surfaceTexture?.let {
-                it.release()
-            }
+            textureView.surfaceTexture?.release()
         }
     )
 }

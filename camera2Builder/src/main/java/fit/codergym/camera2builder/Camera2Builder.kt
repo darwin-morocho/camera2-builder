@@ -167,18 +167,25 @@ class Camera2Builder(
     private fun createCameraPreviewSession() {
         try {
             val cameraDevice = cameraDevice ?: return
-            val textureView = textureView ?: return
             val imageReader = imageReader ?: return
+            val textureView = textureView
 
-            val surfaceTexture = textureView.surfaceTexture ?: return
-            surfaceTexture.setDefaultBufferSize(previewSize.width, previewSize.height)
-            val previewSurface = Surface(surfaceTexture)
             val imageReaderSurface = imageReader.surface
 
             val captureRequestBuilder = cameraDevice.createCaptureRequest(
                 CameraDevice.TEMPLATE_PREVIEW
             )
-            captureRequestBuilder.addTarget(previewSurface)
+
+            val outputs = mutableListOf<OutputConfiguration>()
+
+            val surfaceTexture = textureView?.surfaceTexture
+            if (surfaceTexture != null) {
+                surfaceTexture.setDefaultBufferSize(previewSize.width, previewSize.height)
+                val previewSurface = Surface(surfaceTexture)
+                captureRequestBuilder.addTarget(previewSurface)
+                outputs.add(OutputConfiguration(previewSurface))
+            }
+
             captureRequestBuilder.addTarget(imageReaderSurface)
 
             captureRequestBuilder.set(
@@ -190,10 +197,7 @@ class Camera2Builder(
                 CaptureRequest.CONTROL_AE_MODE_ON
             )
 
-            val outputs = listOf(
-                OutputConfiguration(previewSurface),
-                OutputConfiguration(imageReaderSurface)
-            )
+            outputs.add( OutputConfiguration(imageReaderSurface))
 
             val sessionConfiguration = SessionConfiguration(
                 SessionConfiguration.SESSION_REGULAR,
