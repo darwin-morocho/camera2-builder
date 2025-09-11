@@ -20,6 +20,7 @@ import android.view.TextureView
 import androidx.annotation.RequiresApi
 import java.util.concurrent.atomic.AtomicBoolean
 
+
 class Camera2Builder(
     private val context: Context,
     private val cameraId: String,
@@ -29,7 +30,7 @@ class Camera2Builder(
 
     private val lock = Any()
     private var isProcessing = AtomicBoolean(false)
-    private var isReleasing = AtomicBoolean(false)
+    var isReleasing = AtomicBoolean(false)
 
     private var cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
     private var onFrameListener: ((ByteArray, Size) -> Unit)? = null
