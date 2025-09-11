@@ -1,6 +1,5 @@
 package fit.codergym.camera2builder
 
-import android.app.Notification
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import kotlinx.coroutines.*

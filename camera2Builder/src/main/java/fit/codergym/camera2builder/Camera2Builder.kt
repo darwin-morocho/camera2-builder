@@ -69,6 +69,7 @@ class Camera2Builder(
             return
         }
 
+        lastFrameTime = 0L
         this.releaseCallback = onComplete
         this.startCallback = null
 
@@ -244,6 +245,10 @@ class Camera2Builder(
         }
     }
 
+
+    private var lastFrameTime = 0L
+    private val minFrameIntervalMs = 100L // process max 10 fps
+
     private fun setUpImageReader() {
         imageReader?.close()
 
@@ -255,6 +260,15 @@ class Camera2Builder(
         ).apply {
             setOnImageAvailableListener({ reader ->
                 if (!isRunning.get()) return@setOnImageAvailableListener
+
+                val now = System.currentTimeMillis()
+                if (now - lastFrameTime < minFrameIntervalMs) {
+                    reader.acquireLatestImage()?.close() // Release not processed image
+                    return@setOnImageAvailableListener
+                }
+                lastFrameTime = now
+
+
                 val image = reader.acquireLatestImage()
                 image?.let { processImage(it) }
             }, backgroundHandler)
