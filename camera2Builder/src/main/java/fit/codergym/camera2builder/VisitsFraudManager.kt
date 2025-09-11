@@ -1,5 +1,6 @@
 package fit.codergym.camera2builder
 
+import android.app.Notification
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import kotlinx.coroutines.*
@@ -9,11 +10,13 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class VisitsFraudManager(
     private var interval: Duration,
+    private val notificationDelay: Duration,
     lifecycle: Lifecycle? = null
 ) : LifecycleObserver {
 
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private val visits = ConcurrentHashMap<String, Long>()
+    private val notifications = ConcurrentHashMap<String, Long>()
     private var purgeJob: Job? = null
 
     init {
@@ -29,6 +32,16 @@ class VisitsFraudManager(
         val lastVisit = visits[userId] ?: return false
         val difference = (System.currentTimeMillis() - lastVisit).milliseconds
         return difference <= interval
+    }
+
+    fun recordNotification(userId: String) {
+        notifications[userId] = System.currentTimeMillis()
+    }
+
+    fun shouldNotify(userId: String): Boolean {
+        val lastNotification = notifications[userId] ?: return true
+        val difference = (System.currentTimeMillis() - lastNotification).milliseconds
+        return difference > notificationDelay
     }
 
     fun startPurgeTimer() {
@@ -55,6 +68,7 @@ class VisitsFraudManager(
 
     fun dispose() {
         visits.clear()
+        notifications.clear()
         purgeJob?.cancel()
         scope.cancel()
     }
