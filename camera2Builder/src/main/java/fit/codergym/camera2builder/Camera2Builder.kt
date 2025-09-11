@@ -40,6 +40,8 @@ class Camera2Builder(
 
     private var releaseCallback: (() -> Unit)? = null
 
+    private var startCallback: ((success: Boolean) -> Unit)? = null
+
     @RequiresApi(Build.VERSION_CODES.P)
     fun setTextureView(textureView: TextureView?) {
         this.textureView = textureView
@@ -52,10 +54,11 @@ class Camera2Builder(
         this.onFrameListener = listener
     }
 
-    fun start() {
+    fun start(startCallback: ((Boolean) -> Unit)? = null) {
         if (isRunning.getAndSet(true)) {
             return
         }
+        this.startCallback = startCallback
         startBackgroundThread()
         openCamera()
     }
@@ -67,6 +70,7 @@ class Camera2Builder(
         }
 
         this.releaseCallback = onComplete
+        this.startCallback = null
 
         try {
             captureSession?.close()
@@ -124,8 +128,10 @@ class Camera2Builder(
                         try {
                             setUpImageReader()
                             createCameraPreviewSession()
+                            startCallback?.invoke(true)
                         } catch (e: Exception) {
                             Log.e("Camera2Builder", "Error setting up camera", e)
+                            startCallback?.invoke(false)
                             release()
                         }
                     }
@@ -143,6 +149,7 @@ class Camera2Builder(
                         isRunning.set(false)
                         Log.e("Camera2Builder", "Camera error: $error")
                         releaseCallback?.invoke()
+                        startCallback?.invoke(false)
                     }
                 },
                 backgroundHandler
@@ -197,7 +204,7 @@ class Camera2Builder(
                 CaptureRequest.CONTROL_AE_MODE_ON
             )
 
-            outputs.add( OutputConfiguration(imageReaderSurface))
+            outputs.add(OutputConfiguration(imageReaderSurface))
 
             val sessionConfiguration = SessionConfiguration(
                 SessionConfiguration.SESSION_REGULAR,
