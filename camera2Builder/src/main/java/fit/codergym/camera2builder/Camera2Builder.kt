@@ -27,6 +27,10 @@ class Camera2Builder(
     private var textureView: TextureView? = null
 ) {
 
+    private val lock = Any()
+    private var isProcessing = AtomicBoolean(false)
+    private var isReleasing = AtomicBoolean(false)
+
     private var cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
     private var onFrameListener: ((ByteArray, Size) -> Unit)? = null
 
@@ -63,35 +67,45 @@ class Camera2Builder(
         openCamera()
     }
 
+
     fun release(onComplete: (() -> Unit)? = null) {
-        if (!isRunning.getAndSet(false)) {
-            onComplete?.invoke()
-            return
-        }
+        synchronized(lock) {
+            if (isReleasing.getAndSet(true)) {
+                onComplete?.invoke()
+                return
+            }
 
-        lastFrameTime = 0L
-        this.releaseCallback = onComplete
-        this.startCallback = null
+            if (!isRunning.getAndSet(false)) {
+                onComplete?.invoke()
+                return
+            }
 
-        try {
-            captureSession?.close()
-            imageReader?.close()
-            cameraDevice?.close()
-        } catch (e: Exception) {
-            Log.e("Camera2Builder", "Error releasing camera", e)
-        } finally {
-            captureSession = null
-            imageReader = null
-            cameraDevice = null
-            textureView = null
+            this.releaseCallback = onComplete
+            this.startCallback = null
 
             try {
-                backgroundThread.quitSafely()
-                backgroundThread.join(1000)
-            } catch (e: InterruptedException) {
-                Thread.currentThread().interrupt()
+                // Cerrar recursos de forma segura
+                captureSession?.close()
+                imageReader?.setOnImageAvailableListener(null, null)
+                imageReader?.close()
+                cameraDevice?.close()
+            } catch (e: Exception) {
+                Log.e("Camera2Builder", "Error releasing camera", e)
             } finally {
-                releaseCallback?.invoke()
+                captureSession = null
+                imageReader = null
+                cameraDevice = null
+                textureView = null
+
+                try {
+                    backgroundThread.quitSafely()
+                    backgroundThread.join(1000)
+                } catch (e: InterruptedException) {
+                    Thread.currentThread().interrupt()
+                } finally {
+                    releaseCallback?.invoke()
+                    isReleasing.set(false)
+                }
             }
         }
     }
@@ -276,20 +290,33 @@ class Camera2Builder(
     }
 
     private fun processImage(image: Image) {
+        if (isReleasing.get() || !isRunning.get() || isProcessing.getAndSet(true)) {
+            image.close()
+            return
+        }
+
         try {
-            if (image.format != ImageFormat.YUV_420_888) {
-                return
+            synchronized(lock) {
+                if (isReleasing.get() || !isRunning.get()) {
+                    image.close()
+                    return
+                }
+                if (image.format != ImageFormat.YUV_420_888) {
+                    return
+                }
+
+                val size = Size(image.width, image.height)
+                val nv21Data = Nv21Helper.convertYUV420ToNV21(image)
+                nv21Data?.let {
+                    onFrameListener?.invoke(it, size)
+                }
             }
 
-            val size = Size(image.width, image.height)
-            val nv21Data = Nv21Helper.convertYUV420ToNV21(image)
-            nv21Data?.let {
-                onFrameListener?.invoke(it, size)
-            }
         } catch (e: Exception) {
             Log.e("Camera2Builder", "Error processing image", e)
         } finally {
             image.close()
+            isProcessing.set(false)
         }
     }
 
