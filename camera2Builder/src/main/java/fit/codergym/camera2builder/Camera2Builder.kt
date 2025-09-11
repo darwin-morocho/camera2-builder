@@ -269,8 +269,9 @@ class Camera2Builder(
 
             val size = Size(image.width, image.height)
             val nv21Data = Nv21Helper.convertYUV420ToNV21(image)
-            onFrameListener?.invoke(nv21Data, size)
-
+            nv21Data?.let {
+                onFrameListener?.invoke(it, size)
+            }
         } catch (e: Exception) {
             Log.e("Camera2Builder", "Error processing image", e)
         } finally {
