@@ -292,33 +292,36 @@ class Camera2Builder(
     }
 
     private fun processImage(image: Image) {
-        if (isReleasing.get() || !isRunning.get() || isProcessing.getAndSet(true)) {
-            image.close()
-            return
-        }
-
-        try {
-            synchronized(lock) {
-                if (isReleasing.get() || !isRunning.get()) {
-                    image.close()
-                    return
-                }
-                if (image.format != ImageFormat.YUV_420_888) {
-                    return
-                }
-
-                val size = Size(image.width, image.height)
-                val nv21Data = Nv21Helper.convertYUV420ToNV21(image)
-                nv21Data?.let {
-                    onFrameListener?.invoke(it, size)
-                }
+        image.use {
+            if (isReleasing.get() || !isRunning.get()) {
+                return
             }
 
-        } catch (e: Exception) {
-            Log.e("Camera2Builder👀", "❌ Error processing image", e)
-        } finally {
-            image.close()
-            isProcessing.set(false)
+            if (!isProcessing.compareAndSet(false, true)) {
+                return
+            }
+
+            try {
+                synchronized(lock) {
+                    if (isReleasing.get() || !isRunning.get()) {
+                        return
+                    }
+                    if (image.format != ImageFormat.YUV_420_888) {
+                        return
+                    }
+
+                    val size = Size(image.width, image.height)
+                    val nv21Data = Nv21Helper.convertYUV420ToNV21(image)
+                    nv21Data?.let {
+                        onFrameListener?.invoke(it, size)
+                    }
+                }
+
+            } catch (e: Exception) {
+                Log.e("Camera2Builder👀", "❌ Error processing image", e)
+            } finally {
+                isProcessing.set(false)
+            }
         }
     }
 
