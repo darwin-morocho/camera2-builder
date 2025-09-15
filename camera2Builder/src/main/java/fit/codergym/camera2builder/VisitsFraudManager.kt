@@ -6,6 +6,9 @@ import kotlinx.coroutines.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
+
+val minInterval = 15.seconds
 
 class VisitsFraudManager(
     private var interval: Duration,
@@ -18,13 +21,24 @@ class VisitsFraudManager(
     private val notifications = ConcurrentHashMap<String, Long>()
     private var purgeJob: Job? = null
 
+
+    var isUsingMinInterval = interval == minInterval
+
     init {
+        if (interval.inWholeSeconds < 60L) {
+            interval = minInterval
+        }
         lifecycle?.addObserver(this)
         startPurgeTimer()
     }
 
     fun recordVisit(userId: String) {
         visits[userId] = System.currentTimeMillis()
+    }
+
+    fun removeVisit(userId: String) {
+        visits.remove(userId)
+        notifications.remove(userId)
     }
 
     fun hasRecentVisit(userId: String): Boolean {
@@ -58,11 +72,13 @@ class VisitsFraudManager(
     }
 
     fun setInterval(newInterval: Duration) {
-        if (interval != newInterval) {
-            interval = newInterval
-            purgeJob?.cancel()
-            startPurgeTimer()
+        if (interval == newInterval) {
+            return
         }
+
+        purgeJob?.cancel()
+        interval = if (newInterval.inWholeSeconds < 60L) minInterval else newInterval
+        startPurgeTimer()
     }
 
     fun dispose() {

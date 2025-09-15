@@ -20,13 +20,15 @@ import android.view.TextureView
 import androidx.annotation.RequiresApi
 import java.util.concurrent.atomic.AtomicBoolean
 
-
 class Camera2Builder(
     private val context: Context,
     private val cameraId: String,
     private val previewSize: Size,
-    private var textureView: TextureView? = null
+    private var textureView: TextureView? = null,
+    private var minFrameIntervalMs: Long = 100L // process max fps, default 10fps
 ) {
+
+    private var lastFrameTime = 0L
 
     private val lock = Any()
     private var isProcessing = AtomicBoolean(false)
@@ -53,6 +55,10 @@ class Camera2Builder(
         if (isRunning.get()) {
             restartPreview()
         }
+    }
+
+    fun setMinFrameIntervalMs(intervalMs: Long) {
+        this.minFrameIntervalMs = intervalMs
     }
 
     fun setOnFrameListener(listener: (ByteArray, Size) -> Unit) {
@@ -85,7 +91,6 @@ class Camera2Builder(
             this.startCallback = null
 
             try {
-                // Cerrar recursos de forma segura
                 captureSession?.close()
                 imageReader?.setOnImageAvailableListener(null, null)
                 imageReader?.close()
@@ -260,10 +265,6 @@ class Camera2Builder(
         }
     }
 
-
-    private var lastFrameTime = 0L
-    private val minFrameIntervalMs = 100L // process max 10 fps
-
     private fun setUpImageReader() {
         imageReader?.close()
 
@@ -314,7 +315,7 @@ class Camera2Builder(
             }
 
         } catch (e: Exception) {
-            Log.e("Camera2Builder", "Error processing image", e)
+            Log.e("Camera2Builder👀", "❌ Error processing image", e)
         } finally {
             image.close()
             isProcessing.set(false)
